@@ -1,4 +1,5 @@
 import { Controller, Post, Body } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import admin from '../firebase-admin';
 
 @Controller('auth')
@@ -8,7 +9,6 @@ export class AuthController {
     try {
       console.log(`Login attempt: ${body.email}`);  // Log da tentativa de login
 
-      // Converter o email para minúsculas para lidar com a sensibilidade de caso
       const email = body.email.toLowerCase();
       console.log(`Normalized email: ${email}`);  // Log do email normalizado
 
@@ -30,8 +30,8 @@ export class AuthController {
       });
 
       if (userData) {
-        // Verificar a senha diretamente
-        if (userData.senha === body.password) {
+        const passwordMatch = await bcrypt.compare(body.password, userData.senha);
+        if (passwordMatch) {
           const customToken = await admin.auth().createCustomToken(userData.uid);
           console.log(`Login successful: ${body.email}`);  // Log login bem-sucedido
           return { statusCode: 201, token: customToken };
